@@ -6,6 +6,8 @@ import axios from "axios";
 export default function Home() {
   const [surahs, setSurahs] = useState([]);
   const [memorized, setMemorized] = useState([]);
+  const [bookmarks, setBookmarks] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [currentAyahIndex, setCurrentAyahIndex] = useState(0);
 
   const ayahs = [
@@ -34,25 +36,39 @@ export default function Home() {
     },
   ];
 
+  // Rotate ayahs every 10 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentAyahIndex((prev) => (prev + 1) % ayahs.length);
-    }, 50000);
+    }, 10000);
     return () => clearInterval(interval);
   }, []);
 
+  // Load surahs, memorized, bookmarks
   useEffect(() => {
     axios.get("https://api.alquran.cloud/v1/surah").then((res) => {
       setSurahs(res.data.data);
     });
     setMemorized(JSON.parse(localStorage.getItem("memorizedSurahs")) || []);
+
+    // Get bookmarked surahs
+    const keys = Object.keys(localStorage).filter((k) =>
+      k.startsWith("bookmark-surah-")
+    );
+    const bookmarkedIds = keys.map((k) => parseInt(k.split("bookmark-surah-")[1]));
+    setBookmarks(bookmarkedIds);
   }, []);
 
   const currentAyah = ayahs[currentAyahIndex];
 
+  // Filter surahs by search query
+  const filteredSurahs = surahs.filter((s) =>
+    s.englishName.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="max-w-4xl mx-auto p-4 space-y-6">
-
+    
 
       {/* Quran Ayah Card */}
       <div className="p-4 bg-green-50 border-l-4 border-green-600 rounded-lg shadow-md animate-fadeIn">
@@ -64,6 +80,17 @@ export default function Home() {
         <p className="text-gray-600 text-sm">{currentAyah.description}</p>
       </div>
 
+      {/* Search Bar */}
+      <div className="mb-4 text-center">
+        <input
+          type="text"
+          placeholder="Search Surah..."
+          className="w-full sm:w-1/2 p-2 border rounded shadow focus:outline-none focus:ring-2 focus:ring-green-500"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+
       {/* Surah List */}
       <h1 className="text-2xl md:text-3xl font-bold mb-2 text-center">
         Surah List
@@ -73,15 +100,20 @@ export default function Home() {
       </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {surahs.map((surah) => (
-          <Link
-            key={surah.number}
-            to={`/surah/${surah.number}`}
-            className="p-4 border rounded-lg shadow hover:bg-gray-50 transition text-center"
-          >
-            {surah.number}. {surah.englishName}
-          </Link>
-        ))}
+        {filteredSurahs.map((surah) => {
+          const isBookmarked = bookmarks.includes(surah.number);
+          return (
+            <Link
+              key={surah.number}
+              to={`/surah/${surah.number}`}
+              className={`p-4 border rounded-lg shadow text-center transition hover:bg-gray-50 ${
+                isBookmarked ? "bg-green-100 border-green-500" : "bg-white"
+              }`}
+            >
+              {surah.number}. {surah.englishName}
+            </Link>
+          );
+        })}
       </div>
     </div>
   );
