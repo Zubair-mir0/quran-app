@@ -25,6 +25,12 @@ export default function App() {
 
           <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-4">
             <Link
+              to="/"
+              className="px-4 py-2 bg-gray-600 text-white rounded shadow hover:bg-blue-700 transition text-center"
+            >
+              Home
+            </Link>
+            <Link
               to="/memorized"
               className="px-4 py-2 bg-blue-600 text-white rounded shadow hover:bg-blue-700 transition text-center"
             >
